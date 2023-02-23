@@ -17,20 +17,28 @@ from keras.models import load_model
 from keras.preprocessing.image import img_to_array
 
 
-
-class Detect_emotions:
+class Parameters:
 
     def __init__(self):
 
-        self.emotion_labels = ['Angry','Happy','Neutral', 'Sad']
-        self.face_classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-        self.classifier = load_model('D:\CNN_Projects\Emotions\emotions.h5')
+        self.labels = ['Angry','Happy','Neutral', 'Sad']
+        self.face = cv2.CascadeClassifier('./haarcascade_frontalface_default.xml')
+        self.model = load_model('./emotions.h5')
+
+class Detect_emotions(Parameters):
+
+    def __init__(self):
+        
+        super().__init__()
+        self.emotion_labels = self.labels
+        self.face_classifier = self.face
+        self.classifier = self.model
         self.cap = cv2.VideoCapture(0)
 
     def predeict_emotions(self):
 
         while True:
-            _, frame = self.cap.read()
+            ret , frame = self.cap.read()
             faces = self.face_classifier.detectMultiScale(frame)
             for (x,y,w,h) in faces:
 
@@ -54,19 +62,21 @@ class Detect_emotions:
             cv2.moveWindow('Emotion Detector' , 400,200)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-
+        
         self.cap.release()
         cv2.destroyAllWindows()
 
 
-class Load_Image:
+class Load_Image(Parameters):
 
     def __init__(self,image):
         
+        super().__init__()
+        
+        self.emotion_labels = self.labels
+        self.classifier = self.model
+        self.face_classifier = self.face
         self.image = cv2.imread(image)
-        self.emotion_labels = ['Angry','Happy','Neutral', 'Sad']
-        self.classifier = load_model('D:\CNN_Projects\Emotions\emotions.h5')
-        self.face_classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
     def predict_emotion(self):
 
@@ -110,8 +120,12 @@ class Camera_canvas:
     def run_app(self):
 
         def run_code():
-            de = Detect_emotions()
-            de.predeict_emotions()
+            try:
+                de = Detect_emotions()
+                de.predeict_emotions()
+            except Exception:
+                messagebox.showwarning(title="Error",message="camera not found")
+
         
         tk.Button(self.top, text="open camera", bg='white',
                   fg='Black', command=run_code).place(x=160, y=90)
