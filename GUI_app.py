@@ -21,14 +21,16 @@ class Parameters:
 
     def __init__(self):
 
-        self.labels = ['Angry','Happy','Neutral', 'Sad']
-        self.face = cv2.CascadeClassifier('./haarcascade_frontalface_default.xml')
+        self.labels = ['Angry', 'Happy', 'Neutral', 'Sad']
+        self.face = cv2.CascadeClassifier(
+            './haarcascade_frontalface_default.xml')
         self.model = load_model('./emotions.h5')
+
 
 class Detect_emotions(Parameters):
 
     def __init__(self):
-        
+
         super().__init__()
         self.emotion_labels = self.labels
         self.face_classifier = self.face
@@ -38,41 +40,44 @@ class Detect_emotions(Parameters):
     def predeict_emotions(self):
 
         while True:
-            ret , frame = self.cap.read()
+            ret, frame = self.cap.read()
             faces = self.face_classifier.detectMultiScale(frame)
-            for (x,y,w,h) in faces:
+            for (x, y, w, h) in faces:
 
-                cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,255),2)
-                roi_gray = frame[y:y+h,x:x+w]
-                roi_gray = cv2.resize(roi_gray,(48,48),interpolation=cv2.INTER_AREA)
-                
-                if np.sum([roi_gray])!=0:
-                    roi = roi_gray.astype('float')/255.0
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 255), 2)
+                roi_ = frame[y:y+h, x:x+w]
+                roi_ = cv2.resize(roi_, (48, 48),
+                                      interpolation=cv2.INTER_AREA)
+
+                if np.sum([roi_]) != 0:
+                    roi = roi_.astype('float')/255.0
                     roi = img_to_array(roi)
-                    roi = np.expand_dims(roi,axis=0)
-                
+                    roi = np.expand_dims(roi, axis=0)
+
                     prediction = self.classifier.predict(roi)[0]
-                    label=self.emotion_labels[prediction.argmax()]
-                    label_position = (x,y)
-                    cv2.putText(frame,label,label_position,cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+                    label = self.emotion_labels[prediction.argmax()]
+                    label_position = (x, y)
+                    cv2.putText(frame, label, label_position,
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 else:
-                    cv2.putText(frame,'No Faces',(30,80),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-            
-            cv2.imshow('Emotion Detector',frame)
-            cv2.moveWindow('Emotion Detector' , 400,200)
+                    cv2.putText(frame, 'No Faces', (30, 80),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            cv2.imshow('Emotion Detector', frame)
+            cv2.moveWindow('Emotion Detector', 400, 200)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-        
+
         self.cap.release()
         cv2.destroyAllWindows()
 
 
 class Load_Image(Parameters):
 
-    def __init__(self,image):
-        
+    def __init__(self, image):
+
         super().__init__()
-        
+
         self.emotion_labels = self.labels
         self.classifier = self.model
         self.face_classifier = self.face
@@ -81,40 +86,46 @@ class Load_Image(Parameters):
     def predict_emotion(self):
 
         faces = self.face_classifier.detectMultiScale(self.image)
-        for (x,y,w,h) in faces:
+        for (x, y, w, h) in faces:
 
-            cv2.rectangle(self.image,(x,y),(x+w,y+h),(0,255,255),2)
-            roi_gray = self.image[y:y+h,x:x+w]
-            roi_gray = cv2.resize(roi_gray,(48,48),interpolation=cv2.INTER_AREA)
+            cv2.rectangle(self.image, (x, y), (x+w, y+h), (0, 255, 255), 2)
+            roi_ = self.image[y:y+h, x:x+w]
+            roi_ = cv2.resize(roi_, (48, 48),
+                                  interpolation=cv2.INTER_AREA)
 
-            if np.sum([roi_gray])!=0:
-                roi = roi_gray.astype('float')/255.0
+            if np.sum([roi_]) != 0:
+                roi = roi_.astype('float')/255.0
                 roi = img_to_array(roi)
-                roi = np.expand_dims(roi,axis=0)
+                roi = np.expand_dims(roi, axis=0)
                 prediction = self.classifier.predict(roi)[0]
-                label=self.emotion_labels[prediction.argmax()]
-                label_position = (x,y)
-                cv2.putText(self.image,label,label_position,cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
+                label = self.emotion_labels[prediction.argmax()]
+                label_position = (x, y)
+                cv2.putText(self.image, label, label_position,
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             else:
-                cv2.putText(self.image,'No Faces',(30,80),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2)
-        
+                cv2.putText(self.image, 'No Faces', (30, 80),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
     def display_image(self):
-        
+
         self.predict_emotion()
-        resized_image = cv2.resize(self.image , (700,700))
-        cv2.imshow('Emotion Detector',resized_image)
-        cv2.moveWindow('Emotion Detector' , 400,60)
+        resized_image = cv2.resize(self.image, (700, 700))
+        cv2.imshow('Emotion Detector', resized_image)
+        cv2.moveWindow('Emotion Detector', 400, 60)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
 
 class Camera_canvas:
 
     def __init__(self):
 
         self.top = tk.Tk()
-        self.canvas = tk.Canvas(self.top, width=400, height=200 , background="light blue")
+        self.canvas = tk.Canvas(self.top, width=400,
+                                height=200, background="light blue")
         self.top.eval('tk::PlaceWindow . center')
-        tk.Label(self.top, text="Emotion Detection",font=("Helvetica", 14) , background="light blue").place(x=120, y=50)
+        tk.Label(self.top, text="Emotion Detection", font=(
+            "Helvetica", 14), background="light blue").place(x=120, y=50)
         self.canvas.pack()
 
     def run_app(self):
@@ -124,22 +135,26 @@ class Camera_canvas:
                 de = Detect_emotions()
                 de.predeict_emotions()
             except Exception:
-                messagebox.showwarning(title="Error",message="camera not found")
+                messagebox.showwarning(
+                    title="Error", message="camera not found")
 
-        
         tk.Button(self.top, text="open camera", bg='white',
                   fg='Black', command=run_code).place(x=160, y=90)
         self.top.mainloop()
+
 
 class Image_canvas:
 
     def __init__(self):
 
         self.top = tk.Tk()
-        self.canvas = tk.Canvas(self.top, width=400, height=200 , background="light blue")
+        self.canvas = tk.Canvas(self.top, width=400,
+                                height=200, background="light blue")
         self.top.eval('tk::PlaceWindow . center')
-        tk.Label(self.top, text="Select an Image",font=("Helvetica", 14) , background="light blue").place(x=120, y=50)
-        tk.Label(self.top, text="Enter Path for Image : ",font=("Helvetica", 10) , background="light blue").place(x=50, y=87)
+        tk.Label(self.top, text="Select an Image", font=(
+            "Helvetica", 14), background="light blue").place(x=120, y=50)
+        tk.Label(self.top, text="Enter Path for Image : ", font=(
+            "Helvetica", 10), background="light blue").place(x=50, y=87)
         self.entry_widget = tk.Entry(self.top)
         self.canvas.create_window(250, 100, window=self.entry_widget)
         self.canvas.pack()
@@ -154,29 +169,28 @@ class Image_canvas:
                 la.display_image()
             else:
 
-                messagebox.showwarning(title="Error",message="image not found")
-                
-                
-        
+                messagebox.showwarning(
+                    title="Error", message="image not found")
+
         tk.Button(self.top, text="open camera", bg='white',
                   fg='Black', command=run_code).place(x=160, y=120)
         self.top.mainloop()
 
+
 class Outer_Canvas:
 
     def __init__(self):
-        
-        
+
         self.outer = tk.Tk()
-        self.canvas = tk.Canvas(self.outer, width=400, height=200 , background="light blue")
+        self.canvas = tk.Canvas(self.outer, width=400,
+                                height=200, background="light blue")
         self.outer.eval('tk::PlaceWindow . center')
-        tk.Label(self.outer, text="Emotion Detection",font=("Helvetica", 14) , background="light blue").place(x=120, y=50)
+        tk.Label(self.outer, text="Emotion Detection", font=(
+            "Helvetica", 14), background="light blue").place(x=120, y=50)
         self.canvas.pack()
-        
 
     def open_image(self):
 
-        
         def display_image():
 
             build_window = Image_canvas()
@@ -194,15 +208,7 @@ class Outer_Canvas:
         self.outer.mainloop()
 
 
-
-
-
 if __name__ == "__main__":
 
     oc = Outer_Canvas()
     oc.open_image()
-
-
-
-
-        
