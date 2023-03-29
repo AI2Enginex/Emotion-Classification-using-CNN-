@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from keras.models import load_model
 from werkzeug.utils import secure_filename
-from flask import Flask, request, render_template, Response
+from flask import Flask, request, render_template, Response , flash
 
 
 class Load_Var:
@@ -93,13 +93,13 @@ class Camera_Frame(Load_Var):
 
                 yield(b'--frame\r\n'
                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-
+                
 class Flask_app:
 
     def __init__(self):
 
         self.app = Flask(__name__, template_folder='templates')
+        self.app.secret_key = 'emotions'
 
 
 class Image_predict(Flask_app):
@@ -148,9 +148,10 @@ class Live_Video(Flask_app):
     
     def close_camera(self):
 
-        if self.cam.isOpened():
-            self.cam.release()
-
+        while self.cam.isOpened():
+           self.cam.release()
+           
+        flash("Camera Objeck Killed....please restart the server")
         return render_template('live_camera.html')
 
    
@@ -169,10 +170,11 @@ class Run_Template(Image_predict,Live_Video):
         self.app.add_url_rule(
             '/webcam', methods=['GET', 'POST'], view_func=self.live_camera)
         self.app.add_url_rule(
+            '/release', methods=['GET', 'POST'], view_func=self.close_camera)
+        self.app.add_url_rule(
             '/video', methods=['GET', 'POST'], view_func=self.video)
         
-        self.app.add_url_rule(
-            '/release', methods=['GET', 'POST'], view_func=self.close_camera)
+        
         
         self.app.run(debug=True)
 
