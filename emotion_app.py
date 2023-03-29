@@ -3,7 +3,6 @@ import cv2
 import numpy as np
 from keras.models import load_model
 from werkzeug.utils import secure_filename
-from keras.preprocessing.image import img_to_array
 from flask import Flask, request, render_template, Response
 
 
@@ -36,7 +35,6 @@ class Image(Load_Var):
 
                 if np.sum([roi_]) != 0:
                     roi = roi_.astype('float')/255.0
-                    roi = img_to_array(roi)
                     roi = np.expand_dims(roi, axis=0)
                     prediction = self.model.predict(roi)[0]
                     label = self.emotion_labels[prediction.argmax()]
@@ -55,12 +53,13 @@ class Camera_Frame(Load_Var):
         self.camera = cv2.VideoCapture(0)
 
     def frames(self):
-
+        
         while True:
 
             ret, frame = self.camera.read()
+            
             if not ret:
-                break
+               break
             else:
 
                 faces = self.face_classifier.detectMultiScale(frame)
@@ -86,13 +85,14 @@ class Camera_Frame(Load_Var):
                     else:
                         cv2.putText(frame, 'No Faces', (30, 80),
                                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                
+
                 ret, buffer = cv2.imencode('.jpg', frame)
                 frame = buffer.tobytes()
 
-            yield(b'--frame\r\n'
-                  b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-        self.camera.release()
+                yield(b'--frame\r\n'
+                  b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 
 class Flask_app:
@@ -125,44 +125,61 @@ class Image_predict(Flask_app):
             return preds
         return None
 
-    def run_application(self):
-
-        self.app.add_url_rule(
-            '/', methods=['GET', 'POST'], view_func=self.index)
-        self.app.add_url_rule(
-            '/predict', methods=['GET', 'POST'], view_func=self.predict)
-        self.app.run(debug=True)
-
-
 class Live_Video(Flask_app):
 
     def __init__(self):
 
         super().__init__()
+
         self.web_cam = Camera_Frame()
+        self.cam = self.web_cam.camera
 
     def live_camera(self):
 
         return render_template('live_camera.html')
 
     def video(self):
+        
+        cam_frm = self.web_cam.frames()
 
-        try:
-            return Response(self.web_cam.frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-        except:
-            return None
+        if cam_frm:
+            return Response(cam_frm, mimetype='multipart/x-mixed-replace; boundary=frame')
+        return render_template('live_camera.html')
+    
+    def close_camera(self):
 
+        if self.cam.isOpened():
+            self.cam.release()
+
+        return render_template('live_camera.html')
+
+   
+
+class Run_Template(Image_predict,Live_Video):
+
+    def __init__(self):
+        super().__init__()
+    
     def run_application(self):
 
         self.app.add_url_rule(
-            '/', methods=['GET', 'POST'], view_func=self.live_camera)
+            '/', methods=['GET', 'POST'], view_func=self.index)
+        self.app.add_url_rule(
+            '/predict', methods=['GET', 'POST'], view_func=self.predict)
+        self.app.add_url_rule(
+            '/webcam', methods=['GET', 'POST'], view_func=self.live_camera)
         self.app.add_url_rule(
             '/video', methods=['GET', 'POST'], view_func=self.video)
-
+        
+        self.app.add_url_rule(
+            '/release', methods=['GET', 'POST'], view_func=self.close_camera)
+        
         self.app.run(debug=True)
+
+        
 
 
 if __name__ == '__main__':
 
-    image = Image_predict()
-    image.run_application()
+    run = Run_Template()
+    run.run_application()
