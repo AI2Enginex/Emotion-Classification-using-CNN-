@@ -1,15 +1,28 @@
 {% extends "base.html" %} 
-
 {% block content %}
-<center>
 
-	<h1>Live streaming</h1>
-    <div>
-
-        <img src="{{ url_for('video') }}" width="50%"/>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+   
+    {% for message in messages %}
+    <div class="alert alert-danger" role="alert">
+      {{ message }}
     </div>
+    {% endfor %}
+  
+  {% endif %}
+{% endwith %}
+<center>
+  <h1>Live streaming</h1>
+    <div>
+         
+        <img src="{{ url_for('video')}}" width="50%">
+       
+    </div>
+    <br>
+    <form method="post">
+    <a href="/release"><button type="button" class="btn btn-primary btn-lg ">Kill Camera Object</button></a>
+    </form>
+  
 </center>
-
-
-
 {% endblock %}
