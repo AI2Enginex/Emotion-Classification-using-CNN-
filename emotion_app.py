@@ -54,20 +54,18 @@ class Camera_Frame(Load_Var):
 
     def frames(self):
         
-        while True:
-
-            ret, frame = self.camera.read()
+        try:
+            while True:
+                ret, frame = self.camera.read()
             
-            if not ret:
-               break
-            else:
+                
 
                 faces = self.face_classifier.detectMultiScale(frame)
                 for (x, y, w, h) in faces:
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 255), 2)
                     roi_ = frame[y:y+h, x:x+w]
                     roi_ = cv2.resize(roi_, (48, 48),
-                                      interpolation=cv2.INTER_AREA)
+                                        interpolation=cv2.INTER_AREA)
 
                     if np.sum([roi_]) != 0:
                         roi = roi_.astype('float')/255.0
@@ -92,7 +90,9 @@ class Camera_Frame(Load_Var):
 
 
                 yield(b'--frame\r\n'
-                  b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        except:
+            return None
                 
 class Flask_app:
 
@@ -150,7 +150,7 @@ class Live_Video(Flask_app):
 
         while self.cam.isOpened():
            self.cam.release()
-           
+       
         flash("Camera Objeck Killed....please restart the server")
         return render_template('live_camera.html')
 
